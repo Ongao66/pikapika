@@ -7,14 +7,33 @@ env:
   GH_TOKEN: ${{ secrets.GH_TOKEN }}
   GO_VERSION: '1.17'
   FLUTTER_VERSION: '2.10.3'
+  ANDROID_NDK_VERSION: "23.1.7779620"
 
 jobs:
   build-deb:
     runs-on: ubuntu-latest
     steps:
-      # 检出代码
+      # 检出主仓库代码
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          ref: ${{ env.BRANCH }}
+
+      # 列出主仓库工作目录内容
+      - name: List main working directory
+        run: ls -al
+
+      # 检出依赖仓库代码
+      - name: Checkout core
+        uses: actions/checkout@v3
+        with:
+          repository: 'niuhuan/pikapika-go-core'
+          token: ${{ secrets.GH_TOKEN }}
+          path: 'go'
+
+      # 列出依赖仓库工作目录内容
+      - name: List go working directory
+        run: ls -al go
 
       # 设置 Go 环境
       - name: Setup golang
@@ -60,9 +79,7 @@ jobs:
         run: |
           mkdir -p deb_package/DEBIAN
           mkdir -p deb_package/usr/bin
-          # 假设构建产物是可执行文件，将其复制到包结构中
           cp build/app/outputs/flutter-apk/app-release.apk deb_package/usr/bin/
-          # 创建控制文件
           cat << EOF > deb_package/DEBIAN/control
           Package: pikapika
           Version: 1.8.14
